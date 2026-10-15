@@ -10,8 +10,6 @@
 [![UI: Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4.svg)](https://developer.android.com/jetpack/compose)
 [![Map: MapLibre](https://img.shields.io/badge/Map-MapLibre-orange.svg)](https://maplibre.org/)
 
-<img src="public/cover.jpg" alt="封面" width="480" />
-
 </div>
 
 ---
@@ -43,10 +41,9 @@
 
 ## 📱 截图
 
-| 界面 | 预览 |
-|---|---|
-| 主界面 · 地图选点 | ![主界面](public/main.jpg) |
-| 协议与免责声明 | ![协议](public/license.jpg) |
+| 封面 | 主界面 · 地图选点 | 协议与免责声明 |
+|:---:|:---:|:---:|
+| <img src="public/cover.jpg" alt="封面" width="220"> | <img src="public/main.jpg" alt="主界面" width="220"> | <img src="public/license.jpg" alt="协议" width="220"> |
 
 ---
 
