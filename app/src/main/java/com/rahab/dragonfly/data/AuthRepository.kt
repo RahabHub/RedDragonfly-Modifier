@@ -4,6 +4,7 @@ import android.content.Context
 import com.rahab.dragonfly.config.AppConfig
 import com.rahab.dragonfly.data.api.ApiClient
 import com.rahab.dragonfly.data.model.LoginData
+import com.rahab.dragonfly.data.model.School
 import com.rahab.dragonfly.util.DeviceInfo
 import com.rahab.dragonfly.util.Md5
 import com.rahab.dragonfly.util.NetworkError
@@ -13,13 +14,11 @@ import kotlinx.coroutines.withContext
 /**
  * 登录业务仓库。
  *
- * 负责组装登录参数、调用接口，并把网络层异常转换为可展示的结果。
+ * 负责组装登录参数、调用指定学校的接口，并把网络层异常转换为可展示的结果。
  *
  * @author Rahab
  */
 class AuthRepository(private val context: Context) {
-
-    private val api = ApiClient(AppConfig.BASE_URL)
 
     /** 登录结果：成功携带用户数据，失败携带可读错误信息。 */
     sealed interface LoginResult {
@@ -30,13 +29,15 @@ class AuthRepository(private val context: Context) {
     /**
      * 登录。
      *
-     * @param studentno 学号
-     * @param password  明文密码（内部会转为 MD5 后上报）
+     * @param school     用户选择的学校
+     * @param studentno  学号
+     * @param password   明文密码（内部会转为 MD5 后上报）
      */
-    suspend fun login(studentno: String, password: String): LoginResult =
+    suspend fun login(school: School, studentno: String, password: String): LoginResult =
         withContext(Dispatchers.IO) {
             try {
-                val params = buildLoginParams(studentno, password)
+                val api = ApiClient(school.baseUrl)
+                val params = buildLoginParams(school, studentno, password)
                 val response = api.login(params)
 
                 val data = response.data
@@ -56,9 +57,9 @@ class AuthRepository(private val context: Context) {
     /**
      * 组装登录表单参数（字段与新版红蜻蜓一致）。
      */
-    private fun buildLoginParams(studentno: String, password: String): Map<String, String> {
+    private fun buildLoginParams(school: School, studentno: String, password: String): Map<String, String> {
         return mapOf(
-            "schoolno" to AppConfig.SCHOOL_NO,
+            "schoolno" to school.schoolno,
             "studentno" to studentno,
             "pwd" to Md5.hex(password),
             "subtype" to AppConfig.SUBTYPE,

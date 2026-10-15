@@ -24,11 +24,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -54,7 +60,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.rahab.dragonfly.config.AppConfig
+import com.rahab.dragonfly.data.model.LoginData
+import com.rahab.dragonfly.data.model.School
 import com.rahab.dragonfly.ui.theme.Coral100
 import com.rahab.dragonfly.ui.theme.Coral500
 import com.rahab.dragonfly.ui.theme.Mist100
@@ -64,22 +71,27 @@ import com.rahab.dragonfly.ui.theme.Teal900
 /**
  * 登录页。
  *
- * 学校固定为北京语言大学，用户输入学号与密码即可登录。
+ * 用户选择学校并输入学号与密码登录。
  *
  * @author Rahab
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
-    onLoginSuccess: (com.rahab.dragonfly.data.model.LoginData) -> Unit,
+    onLoginSuccess: (LoginData, School) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val schools by viewModel.schools.collectAsStateWithLifecycle()
+    val selectedSchool by viewModel.selectedSchool.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
 
     // 登录成功后回调跳转。
     state.loginData?.let { data ->
-        onLoginSuccess(data)
-        return
+        selectedSchool?.let { school ->
+            onLoginSuccess(data, school)
+            return
+        }
     }
 
     Box(
@@ -113,15 +125,15 @@ fun LoginScreen(
             // 品牌区
             Text(
                 text = "红蜻蜓轨迹",
-                color = androidx.compose.ui.graphics.Color.White,
+                color = Color.White,
                 fontSize = 34.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp,
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = AppConfig.SCHOOL_NAME,
-                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.8f),
+                text = "选择学校 · 登录跑步系统",
+                color = Color.White.copy(alpha = 0.8f),
                 fontSize = 15.sp,
                 letterSpacing = 1.sp,
             )
@@ -132,7 +144,7 @@ fun LoginScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                color = androidx.compose.ui.graphics.Color.White,
+                color = Color.White,
                 shadowElevation = 12.dp,
             ) {
                 Column(
@@ -144,6 +156,42 @@ fun LoginScreen(
                         style = MaterialTheme.typography.headlineMedium,
                         color = Teal900,
                     )
+
+                    // 学校选择
+                    var schoolMenuExpanded by remember { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = schoolMenuExpanded,
+                        onExpandedChange = { schoolMenuExpanded = it },
+                    ) {
+                        OutlinedTextField(
+                            value = selectedSchool?.schoolname ?: "",
+                            onValueChange = {},
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            readOnly = true,
+                            label = { Text("学校") },
+                            leadingIcon = { Icon(Icons.Outlined.School, null) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = schoolMenuExpanded) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
+                            colors = fieldColors(),
+                        )
+                        ExposedDropdownMenu(
+                            expanded = schoolMenuExpanded,
+                            onDismissRequest = { schoolMenuExpanded = false },
+                        ) {
+                            schools.forEach { school ->
+                                DropdownMenuItem(
+                                    text = { Text(school.schoolname) },
+                                    onClick = {
+                                        viewModel.onSchoolSelected(school)
+                                        schoolMenuExpanded = false
+                                    },
+                                )
+                            }
+                        }
+                    }
 
                     OutlinedTextField(
                         value = state.studentno,
@@ -218,13 +266,13 @@ fun LoginScreen(
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Teal700,
-                            contentColor = androidx.compose.ui.graphics.Color.White,
+                            contentColor = Color.White,
                         ),
                     ) {
                         if (state.isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(22.dp),
-                                color = androidx.compose.ui.graphics.Color.White,
+                                color = Color.White,
                                 strokeWidth = 2.5.dp,
                             )
                         } else {
@@ -242,8 +290,8 @@ fun LoginScreen(
                 enter = fadeIn(tween(600)) + slideInVertically(tween(600)) { it / 2 },
             ) {
                 Text(
-                    text = "学校已锁定 · 北京语言大学",
-                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.55f),
+                    text = "支持多所学校 · 数据仅供学习交流",
+                    color = Color.White.copy(alpha = 0.55f),
                     fontSize = 12.sp,
                     letterSpacing = 0.5.sp,
                 )

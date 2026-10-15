@@ -3,25 +3,14 @@ package com.rahab.dragonfly.config
 /**
  * 应用级配置常量。
  *
- * 学校固定为北京语言大学（BLCU），无需切换。
+ * 学校相关的地址与编号不再硬编码，改为运行时从中央学校列表拉取并由用户选择。
  *
  * @author Rahab
  */
 object AppConfig {
 
-    /** 学校编号（北京语言大学）。 */
-    const val SCHOOL_NO = "10032"
-
-    /** 学校名称。 */
-    const val SCHOOL_NAME = "北京语言大学"
-
-    /**
-     * 学校服务端地址。
-     *
-     * 注意：原版学校列表里该地址是 http，但服务器已强制 https（302 跳转）。
-     * 这里直接使用 https，避免重定向问题。
-     */
-    const val BASE_URL = "https://tyjx.blcu.edu.cn/appapi/"
+    /** 中央学校列表接口（固定地址）。注意：证书仅覆盖 www.sknow.com.cn，必须带 www。 */
+    const val SCHOOL_LIST_URL = "https://www.sknow.com.cn/appapi/getschoollist.php"
 
     /** App 版本号，登录时上报，与原版保持一致。 */
     const val APP_VERSION = "1.2.22"
@@ -32,11 +21,11 @@ object AppConfig {
     /** 用户类型：学生。 */
     const val SUBTYPE = "student"
 
-    // 跑步规则常量（来自 getRunParam.php，校内定向跑）。
-    /** 事件编号。 */
+    // 跑步规则常量（兜底值；正常情况下从 getRunParam.php 动态获取 eventno/ruleid）。
+    /** 事件编号（兜底）。 */
     const val EVENT_NO = "802"
 
-    /** 规则编号。 */
+    /** 规则编号（兜底）。 */
     const val RULE_ID = "5"
 
     /** 打卡点顺序。 */

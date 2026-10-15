@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rahab.dragonfly.data.model.LoginData
+import com.rahab.dragonfly.data.model.School
 import com.rahab.dragonfly.ui.agreement.AgreementScreen
 import com.rahab.dragonfly.ui.login.LoginScreen
 import com.rahab.dragonfly.ui.login.LoginViewModel
@@ -50,8 +51,10 @@ private fun DragonflyRoot() {
 
     val loginViewModel: LoginViewModel = viewModel()
     var loginData by remember { mutableStateOf<LoginData?>(null) }
+    var school by remember { mutableStateOf<School?>(null) }
 
     val current = loginData
+    val currentSchool = school
     when {
         // 首次使用：先同意协议。
         !agreementAccepted -> AgreementScreen(
@@ -62,18 +65,19 @@ private fun DragonflyRoot() {
         )
 
         // 已登录：进入地图选点。
-        current != null -> {
+        current != null && currentSchool != null -> {
             val mapViewModel: MapViewModel = viewModel()
             MapScreen(
                 viewModel = mapViewModel,
                 loginData = current,
+                school = currentSchool,
             )
         }
 
         // 未登录：进入登录页。
         else -> LoginScreen(
             viewModel = loginViewModel,
-            onLoginSuccess = { data -> loginData = data },
+            onLoginSuccess = { data, selected -> loginData = data; school = selected },
         )
     }
 }

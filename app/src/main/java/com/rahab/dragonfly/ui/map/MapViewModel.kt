@@ -9,6 +9,7 @@ import com.rahab.dragonfly.data.model.GeoPoint
 import com.rahab.dragonfly.data.model.LoginData
 import com.rahab.dragonfly.data.model.RunRule
 import com.rahab.dragonfly.data.model.SavedRoute
+import com.rahab.dragonfly.data.model.School
 import com.rahab.dragonfly.data.model.totalDistanceMeters
 import com.rahab.dragonfly.util.RouteStore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +58,9 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     /** 登录用户信息（由 MapScreen 注入）。 */
     private var user: LoginData? = null
 
+    /** 用户选择的学校（由 MapScreen 注入）。 */
+    private var school: School? = null
+
     /** 当前跑步规则（登录后拉取）。 */
     private var rule: RunRule? = null
 
@@ -71,11 +75,12 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             return (km * _uiState.value.paceMinPerKm * 60).toInt()
         }
 
-    /** 注入登录用户信息，并拉取跑步规则。 */
-    fun setUser(data: LoginData) {
+    /** 注入登录用户信息与学校，并拉取跑步规则。 */
+    fun setUser(data: LoginData, selectedSchool: School) {
         user = data
+        school = selectedSchool
         viewModelScope.launch {
-            val fetched = uploadRepository.getRunRule(data.studentno)
+            val fetched = uploadRepository.getRunRule(selectedSchool, data.studentno)
             rule = fetched
             _uiState.update { it.copy(minDistanceM = fetched?.minDistanceM) }
         }
@@ -140,6 +145,10 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update { it.copy(uploadMessage = "登录信息缺失，请重新登录") }
             return
         }
+        val currentSchool = school ?: run {
+            _uiState.update { it.copy(uploadMessage = "学校信息缺失，请重新登录") }
+            return
+        }
         if (state.isUploading) return
         if (state.points.size < 2) {
             _uiState.update { it.copy(uploadMessage = "请先在地图上绘制轨迹") }
@@ -155,6 +164,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _uiState.update { it.copy(isUploading = true, uploadMessage = null) }
             val result = uploadRepository.upload(
+                school = currentSchool,
                 uid = loginData.userid,
                 studentno = loginData.studentno,
                 uploadToken = loginData.uploadToken,

@@ -41,6 +41,7 @@ import com.rahab.dragonfly.config.AppConfig
 import com.rahab.dragonfly.data.SearchRepository
 import com.rahab.dragonfly.data.model.GeoPoint
 import com.rahab.dragonfly.data.model.LoginData
+import com.rahab.dragonfly.data.model.School
 import com.rahab.dragonfly.data.model.SearchResult
 import com.rahab.dragonfly.ui.theme.Ink600
 import kotlinx.coroutines.launch
@@ -74,14 +75,15 @@ private const val POINT_COLOR = "#14B8A6"
 fun MapScreen(
     viewModel: MapViewModel,
     loginData: LoginData,
+    school: School,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val searchRepository = remember { SearchRepository() }
 
-    // 注入登录用户信息，并刷新已保存路线。
-    LaunchedEffect(loginData) {
-        viewModel.setUser(loginData)
+    // 注入登录用户信息与学校，并刷新已保存路线。
+    LaunchedEffect(loginData, school) {
+        viewModel.setUser(loginData, school)
     }
     LaunchedEffect(Unit) {
         viewModel.refreshSavedRoutes()

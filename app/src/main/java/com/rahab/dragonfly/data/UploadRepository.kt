@@ -5,6 +5,7 @@ import com.rahab.dragonfly.config.AppConfig
 import com.rahab.dragonfly.data.api.ApiClient
 import com.rahab.dragonfly.data.model.GeoPoint
 import com.rahab.dragonfly.data.model.RunRule
+import com.rahab.dragonfly.data.model.School
 import com.rahab.dragonfly.data.model.totalDistanceMeters
 import com.rahab.dragonfly.util.Crypto
 import com.rahab.dragonfly.util.DeviceInfo
@@ -26,8 +27,6 @@ import java.util.Locale
  */
 class UploadRepository(private val context: Context) {
 
-    private val api = ApiClient(AppConfig.BASE_URL)
-
     sealed interface UploadResult {
         data class Success(val message: String) : UploadResult
         data class Failure(val message: String) : UploadResult
@@ -36,11 +35,12 @@ class UploadRepository(private val context: Context) {
     /**
      * 拉取当前跑步规则（取第一条）。
      */
-    suspend fun getRunRule(studentno: String): RunRule? = withContext(Dispatchers.IO) {
+    suspend fun getRunRule(school: School, studentno: String): RunRule? = withContext(Dispatchers.IO) {
         try {
+            val api = ApiClient(school.baseUrl)
             val response = api.getRunParam(
                 mapOf(
-                    "schoolno" to AppConfig.SCHOOL_NO,
+                    "schoolno" to school.schoolno,
                     "studentno" to studentno,
                 ),
             )
@@ -54,6 +54,7 @@ class UploadRepository(private val context: Context) {
      * 上传跑步数据。
      */
     suspend fun upload(
+        school: School,
         uid: String,
         studentno: String,
         uploadToken: String,
@@ -63,6 +64,7 @@ class UploadRepository(private val context: Context) {
         rule: RunRule,
     ): UploadResult = withContext(Dispatchers.IO) {
         try {
+            val api = ApiClient(school.baseUrl)
             val distanceM = points.totalDistanceMeters()
             if (distanceM < 1.0) {
                 return@withContext UploadResult.Failure("请先在地图上绘制轨迹")
@@ -78,6 +80,7 @@ class UploadRepository(private val context: Context) {
             val datalog = buildDatalog(track, points, studentno)
 
             val params = buildUploadParams(
+                school = school,
                 uid = uid,
                 studentno = studentno,
                 uploadToken = uploadToken,
@@ -119,6 +122,7 @@ class UploadRepository(private val context: Context) {
 
     /** 组装上传表单参数并计算签名。 */
     private fun buildUploadParams(
+        school: School,
         uid: String,
         studentno: String,
         uploadToken: String,
@@ -141,7 +145,7 @@ class UploadRepository(private val context: Context) {
         val canonical = buildString {
             append("v=1\n")
             append("uid=$uid\n")
-            append("schoolno=${AppConfig.SCHOOL_NO}\n")
+            append("schoolno=${school.schoolno}\n")
             append("studentno=$studentno\n")
             append("begintime=$beginSec\n")
             append("endtime=$endSec\n")
@@ -170,7 +174,7 @@ class UploadRepository(private val context: Context) {
             "begintime" to beginSec.toString(),
             "endtime" to endSec.toString(),
             "uid" to uid,
-            "schoolno" to AppConfig.SCHOOL_NO,
+            "schoolno" to school.schoolno,
             "distance" to distance,
             "speed" to speed,
             "studentno" to studentno,

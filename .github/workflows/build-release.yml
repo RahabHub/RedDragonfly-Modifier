@@ -26,6 +26,11 @@ jobs:
       - name: Grant gradlew execute permission
         run: chmod +x gradlew
 
+      - name: Use official Gradle distribution
+        run: |
+          # 本地用腾讯镜像（国内快），CI 跑在海外，切回官方源
+          sed -i 's|https://mirrors.cloud.tencent.com/gradle/|https://services.gradle.org/distributions/|' gradle/wrapper/gradle-wrapper.properties
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon
 
